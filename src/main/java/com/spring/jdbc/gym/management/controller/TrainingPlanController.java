@@ -39,6 +39,23 @@ public class TrainingPlanController {
     }
 
     @RequiresRole({"ADMIN"})
+    @GetMapping("/assignees/{assigneeId}/trainingPlans")
+    public ResponseEntity<Object> getAssigneeTrainingPlans(
+            @PathVariable String assigneeId,
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        try {
+            ExerciseFilter filter = new ExerciseFilter(limit, offset);
+            filter.setAssigneeId(assigneeId);
+            List<TrainingPlan> trainingPlans = trainingPlanService.getTrainingPlanList(filter);
+            return new ResponseEntity<>(trainingPlans, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @RequiresRole({"ADMIN"})
     @GetMapping("/users/{userId}/trainingPlans/{id}")
     public ResponseEntity<Object> getTrainingPlanById(
             @PathVariable String userId,
@@ -49,6 +66,25 @@ public class TrainingPlanController {
         try {
             ExerciseFilter filter = new ExerciseFilter(limit, offset);
             filter.setUserId(userId);
+            filter.setEntityId (id);
+            TrainingPlan trainingPlan = trainingPlanService.getTrainingPlanById(id, filter);
+            return new ResponseEntity<>(trainingPlan, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Training plan not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @RequiresRole({"ADMIN"})
+    @GetMapping("/assignees/{userId}/trainingPlans/{id}")
+    public ResponseEntity<Object> getAssigneeTrainingPlanById(
+            @PathVariable String userId,
+            @PathVariable String id,
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        try {
+            ExerciseFilter filter = new ExerciseFilter(limit, offset);
+            filter.setAssigneeId(userId);
             filter.setEntityId (id);
             TrainingPlan trainingPlan = trainingPlanService.getTrainingPlanById(id, filter);
             return new ResponseEntity<>(trainingPlan, HttpStatus.OK);
