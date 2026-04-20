@@ -12,6 +12,7 @@ import lombok.Setter;
 public class ExerciseFilter extends Filter {
     private String trainingPlanId;
     private String userId;
+    private String assigneeId;
 
     public ExerciseFilter(String entityId, int limit, int offset) {
         super(entityId, limit, offset);
@@ -27,5 +28,8 @@ public class ExerciseFilter extends Filter {
 
     public boolean hasUserIdSet() {
         return userId != null && !userId.isEmpty();
+    }
+    public boolean hasAssigneeIdSet() {
+        return assigneeId != null && !assigneeId.isEmpty();
     }
 }
