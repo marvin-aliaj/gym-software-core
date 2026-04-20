@@ -37,6 +37,11 @@ public class TrainingPlanDao {
             sql.append(" AND utp.user_id = ?::uuid ");
             params.add(filter.getUserId());
         }
+
+        if (filter.hasAssigneeIdSet()) {
+            sql.append(" AND utp.assignee_id = ?::uuid ");
+            params.add(filter.getAssigneeId());
+        }
         
         sql.append(" LIMIT ? OFFSET ? ");
         params.add(filter.getLimit());
