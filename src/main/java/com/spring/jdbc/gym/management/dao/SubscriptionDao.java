@@ -74,8 +74,8 @@ public class SubscriptionDao {
     }
 
     public Subscription createSubscription(Subscription subscription) throws Exception {
-        String sql = "INSERT INTO subscriptions(user_id, plan_id, start_date, end_date, is_active, mDate, cDate) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO subscriptions(user_id, plan_id, business_id, start_date, end_date, is_active, mDate, cDate) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -84,6 +84,7 @@ public class SubscriptionDao {
                 PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
                 ps.setString(1, subscription.getUser().getId());
                 ps.setString(2, subscription.getPlan().getId());
+                ps.setString(2, subscription.getBusinessId());
                 ps.setString(3, subscription.getStartDate());
                 ps.setString(4, subscription.getEndDate());
                 ps.setBoolean(5, subscription.isActive());
@@ -102,10 +103,11 @@ public class SubscriptionDao {
     }
 
     public void updateSubscription(Subscription subscription) throws Exception {
-        String sql = "UPDATE subscriptions SET user_id = ?, plan_id = ?, start_date = ?, end_date = ?, is_active = ?, mDate = ? WHERE id = ?";
+        String sql = "UPDATE subscriptions SET user_id = ?, plan_id = ?, business_id = ?, start_date = ?, end_date = ?, is_active = ?, mDate = ? WHERE id = ?";
         try {
             jdbcTemplate.update(sql, subscription.getUser().getId(), subscription.getPlan().getId(),
-                    subscription.getStartDate(), subscription.getEndDate(), subscription.isActive(),
+                    subscription.getBusinessId(), subscription.getStartDate(),
+                    subscription.getEndDate(), subscription.isActive(),
                     Timestamp.valueOf(LocalDateTime.now()), subscription.getId());
         } catch (Exception e) {
             throw new Exception(e.getMessage());

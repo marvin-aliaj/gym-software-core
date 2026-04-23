@@ -41,7 +41,7 @@ public class BusinessController {
 
     @GetMapping("/businesses/{id}")
     @RequiresRole({"ADMIN", "BUSINESS_OWNER", "BUSINESS_MANAGER", "TRAINER", "STAFF", "CLIENT"})
-    public ResponseEntity<Object> getGymById(
+    public ResponseEntity<Object> getBusinessById(
             HttpServletRequest request,
             @PathVariable String id) {
         try {

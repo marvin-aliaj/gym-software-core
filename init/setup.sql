@@ -192,6 +192,7 @@ CREATE TABLE subscriptions (
                                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                                plan_id         UUID NOT NULL REFERENCES membership_plans(id),
+                               business_id     UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE ,
                                start_date      DATE NOT NULL DEFAULT CURRENT_DATE,
                                end_date        DATE NOT NULL,
                                is_active    BOOLEAN DEFAULT TRUE not null ,
@@ -257,11 +258,11 @@ INSERT INTO membership_plans (id, gym_id, plan_name, price_cents, duration_days,
                                                                                                              ('b0000000-0000-0000-0000-000000000005', '22222222-2222-2222-2222-222222222222', 'Elite Quarterly', 19999, 90, '3-month commitment with group classes included', TRUE);
 
 -- Insert Subscriptions
-INSERT INTO subscriptions (id, user_id, plan_id, start_date, end_date, is_active) VALUES
-                                                                                      ('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000008', 'b0000000-0000-0000-0000-000000000001', '2026-03-01', '2026-03-31', TRUE),
-                                                                                      ('c0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000009', 'b0000000-0000-0000-0000-000000000002', '2026-02-15', '2026-03-15', TRUE),
-                                                                                      ('c0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000004', '2026-03-10', '2026-04-10', TRUE),
-                                                                                      ('c0000000-0000-0000-0000-000000000004', 'a0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000005', '2026-01-01', '2026-03-31', TRUE);
+INSERT INTO subscriptions (id, user_id, plan_id, business_id, start_date, end_date, is_active) VALUES
+                                                                                      ('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000008', 'b0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', '2026-03-01', '2026-03-31', TRUE),
+                                                                                      ('c0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000009', 'b0000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', '2026-02-15', '2026-03-15', TRUE),
+                                                                                      ('c0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000004', '22222222-2222-2222-2222-222222222222', '2026-03-10', '2026-04-10', TRUE),
+                                                                                      ('c0000000-0000-0000-0000-000000000004', 'a0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000005', '22222222-2222-2222-2222-222222222222', '2026-01-01', '2026-03-31', TRUE);
 
 -- Insert Categories
 INSERT INTO categories (id, title, description) VALUES

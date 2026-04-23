@@ -16,6 +16,7 @@ public class Subscription {
     private String id;
     private User user;
     private MembershipPlan plan;
+    private String businessId;
     private String startDate;
     private String endDate;
     private boolean isActive;
