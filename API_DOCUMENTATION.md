@@ -31,6 +31,7 @@ Authorization: Bearer <your-token>
 7. [Membership Plans](#membership-plan-endpoints)
 8. [Products](#product-endpoints)
 9. [Orders](#order-endpoints)
+10. [Dashboard](#dashboard)
 
 ---
 
@@ -1246,6 +1247,190 @@ Authorization: Bearer <your-token>
 ```
 
 ---
+
+## Dashboard
+
+### 1. Get dashboard data
+**GET** `/dashboard/metrics?businessId=${businessId}&${startDate}&${endDate}`
+businessId=xxxx-xxxx.... startDate=2026-04-01 endDate=2026-04-30
+**Access:** `ADMIN`
+
+**Success Response (200 OK):**
+```json
+{
+  "periodInfo": {
+    "days": 7,
+    "startDate": "2026-04-17",
+    "endDate": "2026-04-23",
+    "previousStartDate": "2026-04-10",
+    "previousEndDate": "2026-04-16"
+  },
+  "metrics": {
+    "activeMembersNow": {
+      "current": 7,
+      "total": 42
+    },
+    "checkInsToday": {
+      "current": 9,
+      "percentChange": 125.0,
+      "previous": 4
+    },
+    "revenue": {
+      "current": 0,
+      "percentChange": -100.0,
+      "previous": 15998
+    },
+    "totalClients": {
+      "current": 31,
+      "percentChange": -8.823529411764707,
+      "previous": 34
+    },
+    "newClients": 9
+  },
+  "graphs": {
+    "revenueTimeSeries": [
+      {
+        "date": "2026-04-17",
+        "value": 0
+      },
+      {
+        "date": "2026-04-18",
+        "value": 0
+      },
+      {
+        "date": "2026-04-19",
+        "value": 0
+      },
+      {
+        "date": "2026-04-20",
+        "value": 0
+      },
+      {
+        "date": "2026-04-21",
+        "value": 0
+      },
+      {
+        "date": "2026-04-22",
+        "value": 0
+      },
+      {
+        "date": "2026-04-23",
+        "value": 0
+      }
+    ],
+    "subscriptions": [
+      {
+        "date": "2026-04-17",
+        "value": 0
+      },
+      {
+        "date": "2026-04-18",
+        "value": 0
+      },
+      {
+        "date": "2026-04-19",
+        "value": 0
+      },
+      {
+        "date": "2026-04-20",
+        "value": 0
+      },
+      {
+        "date": "2026-04-21",
+        "value": 0
+      },
+      {
+        "date": "2026-04-22",
+        "value": 0
+      },
+      {
+        "date": "2026-04-23",
+        "value": 0
+      }
+    ],
+    "rushHours": [
+      {
+        "value": 3,
+        "label": "08:00"
+      },
+      {
+        "value": 3,
+        "label": "09:00"
+      },
+      {
+        "value": 3,
+        "label": "10:00"
+      },
+      {
+        "value": 2,
+        "label": "12:00"
+      },
+      {
+        "value": 3,
+        "label": "13:00"
+      },
+      {
+        "value": 5,
+        "label": "14:00"
+      },
+      {
+        "value": 5,
+        "label": "15:00"
+      },
+      {
+        "value": 1,
+        "label": "16:00"
+      },
+      {
+        "value": 1,
+        "label": "17:00"
+      },
+      {
+        "value": 4,
+        "label": "19:00"
+      },
+      {
+        "value": 3,
+        "label": "20:00"
+      },
+      {
+        "value": 4,
+        "label": "21:00"
+      },
+      {
+        "value": 3,
+        "label": "22:00"
+      }
+    ],
+    "clientGrowth": [
+      {
+        "date": "2026-04-18",
+        "value": 1
+      },
+      {
+        "date": "2026-04-19",
+        "value": 1
+      },
+      {
+        "date": "2026-04-20",
+        "value": 1
+      },
+      {
+        "date": "2026-04-21",
+        "value": 1
+      },
+      {
+        "date": "2026-04-22",
+        "value": 1
+      },
+      {
+        "date": "2026-04-23",
+        "value": 4
+      }
+    ]
+  }
+}
+```
 
 ## Common Error Responses
 
