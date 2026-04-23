@@ -231,7 +231,7 @@ public class DashboardDao {
                 COALESCE(COUNT(s.id), 0) AS value
             FROM date_series ds
             LEFT JOIN subscriptions s ON s.start_date = ds.date
-                """ + (filter.hasBusinessId() ? " AND s.business_id = ?::uuid" : "") + """
+                """ + (filter.hasBusinessId() ? " AND s.business_id = ?::uuid " : "") + """
             GROUP BY ds.date
             ORDER BY ds.date
             """;
@@ -263,7 +263,7 @@ public class DashboardDao {
             FROM attendance_logs
             WHERE entry_time::date >= ?::date
                 AND entry_time::date <= ?::date
-            """ + (filter.hasBusinessId() ? " AND gym_id = ?::uuid" : "") + """
+            """ + (filter.hasBusinessId() ? " AND gym_id = ?::uuid " : "") + """
             GROUP BY EXTRACT(HOUR FROM entry_time)
             ORDER BY hour
             """;
@@ -304,7 +304,7 @@ public class DashboardDao {
             LEFT JOIN users u ON u.enrollment_date = ds.date AND u.role = 'Client'
             """ + (filter.hasBusinessId() ? 
                 " LEFT JOIN user_businesses ub ON u.id = ub.user_id AND ub.business_id = ?::uuid" : "") + """
-            """ + (filter.hasBusinessId() ? " WHERE ub.business_id IS NOT NULL" : "") + """
+            """ + (filter.hasBusinessId() ? " WHERE ub.business_id IS NOT NULL " : "") + """
             GROUP BY ds.date
             ORDER BY ds.date
             """;
