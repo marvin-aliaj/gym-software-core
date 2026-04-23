@@ -212,6 +212,23 @@ CREATE TABLE attendance_logs (
 
 CREATE INDEX idx_active_sessions ON attendance_logs (user_id) WHERE exit_time IS NULL;
 
+CREATE INDEX IF NOT EXISTS idx_attendance_logs_entry_time_gym
+    ON attendance_logs(entry_time, gym_id);
+
+CREATE INDEX IF NOT EXISTS idx_attendance_logs_user_exit
+    ON attendance_logs(user_id, exit_time);
+
+-- Optimize subscription queries (revenue, client count)
+CREATE INDEX IF NOT EXISTS idx_subscriptions_dates_business
+    ON subscriptions(start_date, end_date, business_id, is_active);
+
+-- Optimize order queries (revenue)
+CREATE INDEX IF NOT EXISTS idx_orders_date_business
+    ON orders(cDate, business_id);
+
+-- Optimize user enrollment queries (new clients, client growth)
+CREATE INDEX IF NOT EXISTS idx_users_enrollment_role
+    ON users(enrollment_date, role);
 -- ============================================
 -- TEST DATA
 -- ============================================
