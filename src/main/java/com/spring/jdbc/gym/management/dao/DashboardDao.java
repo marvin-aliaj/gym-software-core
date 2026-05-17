@@ -1,6 +1,7 @@
 package com.spring.jdbc.gym.management.dao;
 
 import com.spring.jdbc.gym.management.model.ActiveMembersMetric;
+import com.spring.jdbc.gym.management.model.MetricComparison;
 import com.spring.jdbc.gym.management.model.TimeSeriesData;
 import com.spring.jdbc.gym.management.model.filter.DashboardFilter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -41,87 +42,174 @@ public class DashboardDao {
         }
     }
 
-    public Long getCheckInsForPeriod(DashboardFilter filter, String startDate, String endDate) throws Exception {
+    public MetricComparison getCheckInsForPeriod(DashboardFilter filter) throws Exception {
         String sql = """
-            SELECT COUNT(*) as check_ins
-            FROM attendance_logs
-            WHERE entry_time::date >= ?::date
-                AND entry_time::date <= ?::date
-            """ + (filter.hasBusinessId() ? " AND gym_id = ?::uuid" : "");
+            Select curr.check_ins as current
+                 , prev.check_ins as prev
+            from (SELECT COUNT(*) as check_ins
+                  FROM attendance_logs
+                  WHERE entry_time::date BETWEEN ?::date AND ?::date
+                    AND gym_id = ?::uuid) as curr,
+                 (SELECT COUNT(*) as check_ins
+                  FROM attendance_logs
+                  WHERE entry_time::date BETWEEN ?::date AND ?::date
+                    AND gym_id = ?::uuid) as prev
+        """;
+        //        String sql = """
+//            SELECT COUNT(*) as check_ins
+//            FROM attendance_logs
+//            WHERE entry_time::date >= ?::date
+//                AND entry_time::date <= ?::date
+//            """ + (filter.hasBusinessId() ? " AND gym_id = ?::uuid" : "");
 
         try {
             List<Object> params = new ArrayList<>();
-            params.add(startDate);
-            params.add(endDate);
+            params.add(filter.getStartDate());
+            params.add(filter.getEndDate());
+            if (filter.hasBusinessId()) {
+                params.add(filter.getBusinessId());
+            }
+            params.add(filter.getPreviousStartDate());
+            params.add(filter.getPreviousEndDate());
             if (filter.hasBusinessId()) {
                 params.add(filter.getBusinessId());
             }
 
-            Long result = jdbcTemplate.queryForObject(sql, Long.class, params.toArray());
-            return result != null ? result : 0L;
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                MetricComparison data = new MetricComparison();
+                data.setCurrent(rs.getLong("current"));
+                data.setPrevious(rs.getLong("prev"));
+                return data;
+            }, params.toArray());
         } catch (Exception e) {
             throw new Exception("Error fetching check-ins: " + e.getMessage());
         }
     }
 
-    public Long getRevenueForPeriod(DashboardFilter filter, String startDate, String endDate) throws Exception {
+    public MetricComparison getRevenueForPeriod(DashboardFilter filter) throws Exception {
         String sql = """
-            SELECT COALESCE(
-                (SELECT SUM(mp.price_cents) 
-                 FROM subscriptions s
-                 JOIN membership_plans mp ON s.plan_id = mp.id
-                 WHERE s.start_date >= ?::date 
-                   AND s.start_date <= ?::date
-                   """ + (filter.hasBusinessId() ? " AND s.business_id = ?::uuid" : "") + """
-                ), 0) +
-                COALESCE(
-                (SELECT SUM(o.total_amount)
-                 FROM orders o
-                 WHERE o.cDate::date >= ?::date 
-                   AND o.cDate::date <= ?::date
-                   """ + (filter.hasBusinessId() ? " AND o.business_id = ?::uuid" : "") + """
-                ), 0) as total_revenue
-            """;
+            WITH sub AS (
+                SELECT
+                    SUM(CASE WHEN s.start_date BETWEEN ?::date AND ?::date THEN mp.price_cents END) AS curr_sub,
+                    SUM(CASE WHEN s.start_date BETWEEN ?::date AND ?::date THEN mp.price_cents END) AS prev_sub
+                FROM subscriptions s
+                         JOIN membership_plans mp ON s.plan_id = mp.id
+                WHERE 1=1
+             AND s.business_id = ?::uuid
+            ),
+                 ord AS (
+                     SELECT
+                         SUM(CASE WHEN o.cDate BETWEEN ?::date AND ?::date THEN o.total_amount END) AS curr_ord,
+                         SUM(CASE WHEN o.cDate BETWEEN ?::date AND ?::date THEN o.total_amount END) AS prev_ord
+                     FROM orders o
+                     WHERE 1=1
+                    AND o.business_id = ?::uuid
+                 )
+            SELECT
+                COALESCE(curr_sub,0) + COALESCE(curr_ord,0) AS current,
+                COALESCE(prev_sub,0) + COALESCE(prev_ord,0) AS prev
+            FROM sub, ord;
+        """;
+//        String sql = """
+//                SELECT
+//                    curr.total_revenue AS current,
+//                    prev.total_revenue AS prev
+//                FROM
+//                    (
+//                        SELECT
+//                            COALESCE(SUM(mp.price_cents), 0) +
+//                            COALESCE((
+//                                         SELECT SUM(o.total_amount)
+//                                         FROM orders o
+//                                         WHERE o.cDate::date BETWEEN ?::date AND ?::date
+//                                        """ + (filter.hasBusinessId() ? " AND o.business_id = ?::uuid" : "") + """
+//                                     ), 0) AS total_revenue
+//                        FROM subscriptions s
+//                                 JOIN membership_plans mp ON s.plan_id = mp.id
+//                        WHERE s.start_date BETWEEN ?::date AND ?::date
+//                          """ + (filter.hasBusinessId() ? " AND s.business_id = ?::uuid" : "") + """
+//                    ) curr,
+//                    (
+//                        SELECT
+//                            COALESCE(SUM(mp.price_cents), 0) +
+//                            COALESCE((
+//                                         SELECT SUM(o.total_amount)
+//                                         FROM orders o
+//                                         WHERE o.cDate::date BETWEEN ?::date AND ?::date
+//                                           """ + (filter.hasBusinessId() ? " AND o.business_id = ?::uuid" : "") + """
+//                                     ), 0) AS total_revenue
+//                        FROM subscriptions s
+//                                 JOIN membership_plans mp ON s.plan_id = mp.id
+//                        WHERE s.start_date BETWEEN ?::date AND ?::date
+//                          """ + (filter.hasBusinessId() ? " AND s.business_id = ?::uuid" : "") + """
+//                    ) prev;
+//                """;
 
         try {
             List<Object> params = new ArrayList<>();
-            params.add(startDate);
-            params.add(endDate);
-            if (filter.hasBusinessId()) {
-                params.add(filter.getBusinessId());
-            }
-            params.add(startDate);
-            params.add(endDate);
+            params.add(filter.getStartDate());
+            params.add(filter.getEndDate());
+            params.add(filter.getPreviousStartDate());
+            params.add(filter.getPreviousEndDate());
             if (filter.hasBusinessId()) {
                 params.add(filter.getBusinessId());
             }
 
-            Long result = jdbcTemplate.queryForObject(sql, Long.class, params.toArray());
-            return result != null ? result : 0L;
+            params.add(filter.getStartDate());
+            params.add(filter.getEndDate());
+            params.add(filter.getPreviousStartDate());
+            params.add(filter.getPreviousEndDate());
+            if (filter.hasBusinessId()) {
+                params.add(filter.getBusinessId());
+            }
+
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                MetricComparison data = new MetricComparison();
+                data.setCurrent(rs.getLong("current"));
+                data.setPrevious(rs.getLong("prev"));
+                return data;
+            }, params.toArray());
         } catch (Exception e) {
             throw new Exception("Error fetching revenue: " + e.getMessage());
         }
     }
 
-    public Long getTotalClientsForPeriod(DashboardFilter filter, String endDate) throws Exception {
+    public MetricComparison getTotalClientsForPeriod(DashboardFilter filter) throws Exception {
         String sql = """
-            SELECT COUNT(DISTINCT s.user_id) as total_clients
-            FROM subscriptions s
-            WHERE s.is_active = true
-                AND s.start_date <= ?::date
-                AND s.end_date >= ?::date
-            """ + (filter.hasBusinessId() ? " AND s.business_id = ?::uuid" : "");
+                SELECT curr.total_clients as current
+                     , prev.total_clients as prev
+                from (SELECT COUNT(DISTINCT s.user_id) as total_clients
+                      FROM subscriptions s
+                      WHERE s.is_active = true
+                        AND s.start_date BETWEEN ?::date AND ?::date
+                        AND s.business_id = ?::uuid) as curr,
+                
+                     (SELECT COUNT(DISTINCT s.user_id) as total_clients
+                      FROM subscriptions s
+                      WHERE s.is_active = true
+                        AND s.start_date BETWEEN ?::date AND ?::date
+                        AND s.business_id = ?::uuid) as prev
+                """;
 
         try {
             List<Object> params = new ArrayList<>();
-            params.add(endDate);
-            params.add(endDate);
+            params.add(filter.getStartDate());
+            params.add(filter.getEndDate());
+            if (filter.hasBusinessId()) {
+                params.add(filter.getBusinessId());
+            }
+            params.add(filter.getPreviousStartDate());
+            params.add(filter.getPreviousEndDate());
             if (filter.hasBusinessId()) {
                 params.add(filter.getBusinessId());
             }
 
-            Long result = jdbcTemplate.queryForObject(sql, Long.class, params.toArray());
-            return result != null ? result : 0L;
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                MetricComparison data = new MetricComparison();
+                data.setCurrent(rs.getLong("current"));
+                data.setPrevious(rs.getLong("prev"));
+                return data;
+            }, params.toArray());
         } catch (Exception e) {
             throw new Exception("Error fetching total clients: " + e.getMessage());
         }
@@ -257,14 +345,16 @@ public class DashboardDao {
 
     public List<TimeSeriesData> getRushHours(DashboardFilter filter) throws Exception {
         String sql = """
-            SELECT 
-                EXTRACT(HOUR FROM entry_time) AS hour,
-                COUNT(*) AS check_ins
-            FROM attendance_logs
+            SELECT
+                hour,
+                COUNT(*)
+            FROM (
+                SELECT EXTRACT(HOUR FROM entry_time) AS hour
+                FROM attendance_logs
             WHERE entry_time::date >= ?::date
                 AND entry_time::date <= ?::date
-            """ + (filter.hasBusinessId() ? " AND gym_id = ?::uuid " : "") + """
-            GROUP BY EXTRACT(HOUR FROM entry_time)
+            """ + (filter.hasBusinessId() ? " AND gym_id = ?::uuid ) as t " : "") + """
+            GROUP BY hour
             ORDER BY hour
             """;
 
@@ -280,7 +370,7 @@ public class DashboardDao {
                 TimeSeriesData data = new TimeSeriesData();
                 int hour = rs.getInt("hour");
                 data.setLabel(String.format("%02d:00", hour));
-                data.setValue(rs.getLong("check_ins"));
+                data.setValue(rs.getLong("count"));
                 return data;
             }, params.toArray());
         } catch (Exception e) {

@@ -6,7 +6,6 @@ import com.spring.jdbc.gym.management.model.*;
 import com.spring.jdbc.gym.management.model.filter.DashboardFilter;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 
 @Service
 public class DashboardService {
@@ -35,39 +34,27 @@ public class DashboardService {
             // Active members now
             metrics.setActiveMembersNow(dashboardDao.getActiveMembersNow(filter));
             
-            // Check-ins today vs previous period average
-            Long checkInsToday = dashboardDao.getCheckInsForPeriod(filter, 
-                java.time.LocalDate.now().toString(), 
-                java.time.LocalDate.now().toString());
-            Long checkInsPrevious = dashboardDao.getCheckInsForPeriod(filter, 
-                filter.getPreviousStartDate(), 
-                filter.getPreviousEndDate());
-            // Calculate daily average for previous period
-            Long checkInsPreviousAvg = checkInsPrevious / filter.getPeriod();
-            metrics.setCheckInsToday(new MetricComparison(checkInsToday, checkInsPreviousAvg));
-            
+            // Check-ins today vs previous period
+            MetricComparison checkInsComparison = dashboardDao.getCheckInsForPeriod(filter);
+            metrics.setCheckInsToday(checkInsComparison);
+
             // Revenue comparison
-            Long revenueCurrent = dashboardDao.getRevenueForPeriod(filter, 
-                filter.getStartDate(), 
-                filter.getEndDate());
-            Long revenuePrevious = dashboardDao.getRevenueForPeriod(filter, 
-                filter.getPreviousStartDate(), 
-                filter.getPreviousEndDate());
-            metrics.setRevenue(new MetricComparison(revenueCurrent, revenuePrevious));
+//            MetricComparison revenueComparison = dashboardDao.getRevenueForPeriod(filter);
+//            metrics.setRevenue(revenueComparison);
             
             // Total clients comparison
-            Long clientsCurrent = dashboardDao.getTotalClientsForPeriod(filter, filter.getEndDate());
-            Long clientsPrevious = dashboardDao.getTotalClientsForPeriod(filter, filter.getPreviousEndDate());
-            metrics.setTotalClients(new MetricComparison(clientsCurrent, clientsPrevious));
-            
+            MetricComparison clientComparison = dashboardDao.getTotalClientsForPeriod(filter);
+            metrics.setTotalClients(clientComparison);
+
             // New clients
-            metrics.setNewClients(dashboardDao.getNewClients(filter));
+//            metrics.setNewClients(dashboardDao.getNewClients(filter));
             
             response.setMetrics(metrics);
 
             // Build graphs
             DashboardGraphs graphs = new DashboardGraphs();
             graphs.setRevenueTimeSeries(dashboardDao.getRevenueTimeSeries(filter));
+
             graphs.setSubscriptions(dashboardDao.getSubscriptionTimeSeries(filter));
             graphs.setRushHours(dashboardDao.getRushHours(filter));
             graphs.setClientGrowth(dashboardDao.getClientGrowthTimeSeries(filter));
